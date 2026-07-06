@@ -337,6 +337,27 @@
   .trongtam-table td.content-cell div{margin-bottom:2px;}
   .trongtam-table td.content-cell div:last-child{margin-bottom:0;}
 
+  .raw-toolbar{
+    display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+    margin-top:16px;
+  }
+  .raw-toolbar input#rawSearch{
+    font-family:'Inter';font-size:13.5px;
+    padding:9px 14px;border:1px solid var(--line);border-radius:6px;
+    background:var(--card);min-width:220px;flex:1 1 220px;
+  }
+  .raw-toolbar input#rawSearch:focus{outline:none;border-color:var(--amber);}
+  .raw-filter-selects{display:flex;flex-wrap:wrap;gap:8px;}
+  select.raw-filter-select{
+    font-family:'Inter';font-size:12.5px;
+    padding:8px 10px;border:1px solid var(--line);border-radius:6px;
+    background:var(--card);color:var(--ink);max-width:200px;
+  }
+  .raw-row-count{
+    font-family:'IBM Plex Mono';font-size:12px;color:var(--slate);
+    margin-left:auto;white-space:nowrap;
+  }
+
   .raw-table-wrap{
     overflow:auto;
     max-height:74vh;
@@ -649,7 +670,15 @@
       <h2>Dữ liệu thô</h2>
     </div>
     <p style="color:var(--slate);font-size:13.5px;margin:14px 0 0;">Toàn bộ dữ liệu gốc từ sheet "Thống kê tổng hợp" trong file đã nạp, giữ nguyên tên cột và nội dung — chưa qua xử lý hay phân loại lại.</p>
-    <div class="card" style="margin-top:18px;padding:0;overflow:hidden;">
+
+    <div class="raw-toolbar" id="rawToolbar" style="display:none;">
+      <input type="text" id="rawSearch" placeholder="🔎 Tìm trong tất cả các cột…">
+      <div id="rawFilterSelects" class="raw-filter-selects"></div>
+      <button type="button" class="btn-outline" id="rawClearFilters">Xóa lọc</button>
+      <span class="raw-row-count" id="rawRowCount"></span>
+    </div>
+
+    <div class="card" style="margin-top:14px;padding:0;overflow:hidden;">
       <div id="rawTableWrap" class="raw-table-wrap"></div>
     </div>
   </section>
@@ -1432,18 +1461,84 @@ const DEFAULT_RAW = {"headers":["STT","Ngày","Khu vực","Vị trí","PIC","Ph�
     return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  function renderRawTable(table){
+  // ---------- Raw data tab: filterable table ----------
+  let currentRawTable = null;
+  let rawFilters = {};       // colIndex -> selected exact value ('' = all)
+  const rawSearchInput = document.getElementById('rawSearch');
+  const rawToolbar = document.getElementById('rawToolbar');
+  const rawFilterSelects = document.getElementById('rawFilterSelects');
+  const rawClearFiltersBtn = document.getElementById('rawClearFilters');
+  const rawRowCount = document.getElementById('rawRowCount');
+
+  function buildRawFilters(table){
+    rawFilters = {};
+    rawFilterSelects.innerHTML = '';
+    if (rawSearchInput) rawSearchInput.value = '';
+    table.headers.forEach((h, idx) => {
+      const values = [...new Set(table.rows.map(r => r[idx]).filter(v => v !== ''))];
+      // Only offer a dropdown for columns that look categorical (few distinct values)
+      if (values.length >= 2 && values.length <= 20) {
+        rawFilters[idx] = '';
+        values.sort((a,b) => a.localeCompare(b, 'vi'));
+        const select = document.createElement('select');
+        select.className = 'raw-filter-select';
+        select.dataset.col = idx;
+        select.innerHTML = `<option value="">${escapeHtml(h)} — Tất cả</option>` +
+          values.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+        select.addEventListener('change', () => { rawFilters[idx] = select.value; applyRawFilters(); });
+        rawFilterSelects.appendChild(select);
+      }
+    });
+  }
+
+  function renderRawRows(headers, rows){
     const wrap = document.getElementById('rawTableWrap');
-    if (!wrap) return;
-    if (!table || !table.headers || !table.rows || !table.rows.length) {
-      wrap.innerHTML = `<p style="color:var(--slate);font-size:13.5px;padding:20px;margin:0;">Chưa có dữ liệu thô để hiển thị.</p>`;
+    if (!rows.length) {
+      wrap.innerHTML = `<p style="color:var(--slate);font-size:13.5px;padding:30px;margin:0;text-align:center;">Không có dòng nào khớp với bộ lọc hiện tại.</p>`;
       return;
     }
-    const theadHtml = '<tr>' + table.headers.map(h => `<th>${escapeHtml(h) || '—'}</th>`).join('') + '</tr>';
-    const bodyHtml = table.rows.map(r => '<tr>' + r.map((c,ci) =>
+    const theadHtml = '<tr>' + headers.map(h => `<th>${escapeHtml(h) || '—'}</th>`).join('') + '</tr>';
+    const bodyHtml = rows.map(r => '<tr>' + r.map((c,ci) =>
       `<td class="${ci===0?'num-cell':''}">${escapeHtml(c) || ''}</td>`
     ).join('') + '</tr>').join('');
     wrap.innerHTML = `<table class="raw-table"><thead>${theadHtml}</thead><tbody>${bodyHtml}</tbody></table>`;
+  }
+
+  function applyRawFilters(){
+    if (!currentRawTable) return;
+    const search = foldVN((rawSearchInput.value || '').trim());
+    const filtered = currentRawTable.rows.filter(row => {
+      for (const idxStr in rawFilters){
+        const idx = +idxStr;
+        if (rawFilters[idx] && row[idx] !== rawFilters[idx]) return false;
+      }
+      if (search && !row.some(cell => foldVN(String(cell||'')).includes(search))) return false;
+      return true;
+    });
+    renderRawRows(currentRawTable.headers, filtered);
+    rawRowCount.textContent = `Hiển thị ${filtered.length} / ${currentRawTable.rows.length} dòng`;
+  }
+
+  if (rawSearchInput) rawSearchInput.addEventListener('input', applyRawFilters);
+  if (rawClearFiltersBtn) rawClearFiltersBtn.addEventListener('click', () => {
+    if (rawSearchInput) rawSearchInput.value = '';
+    Object.keys(rawFilters).forEach(idx => rawFilters[idx] = '');
+    rawFilterSelects.querySelectorAll('select').forEach(s => s.value = '');
+    applyRawFilters();
+  });
+
+  function renderRawTable(table){
+    const wrap = document.getElementById('rawTableWrap');
+    if (!wrap) return;
+    currentRawTable = (table && table.headers && table.rows && table.rows.length) ? table : null;
+    if (!currentRawTable) {
+      rawToolbar.style.display = 'none';
+      wrap.innerHTML = `<p style="color:var(--slate);font-size:13.5px;padding:20px;margin:0;">Chưa có dữ liệu thô để hiển thị.</p>`;
+      return;
+    }
+    rawToolbar.style.display = 'flex';
+    buildRawFilters(currentRawTable);
+    applyRawFilters();
   }
 
   // ---------- Init: show default data unless/until the user imports a file ----------
