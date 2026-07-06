@@ -190,12 +190,10 @@
   .quick-drop .qd-text{font-size:13.5px;color:var(--slate);line-height:1.5;}
   .quick-drop .qd-text strong{color:var(--ink);}
   .quick-drop .qd-source{
-    margin-left:auto;
     font-family:'IBM Plex Mono';
     font-size:12px;
     color:var(--amber-dark);
     white-space:nowrap;
-    padding-left:14px;
   }
   .link-btn{
     background:none;border:none;padding:0;margin:0;
@@ -503,8 +501,12 @@
         </svg>
         <div class="qd-text">
           <strong>Cập nhật dữ liệu:</strong> kéo thả file Excel vào đây, hoặc <button type="button" class="link-btn" id="quickBrowse">bấm để chọn file</button>.
+          File vừa nạp sẽ tự động trở thành dữ liệu mặc định cho những lần mở sau.
         </div>
-        <div class="qd-source" id="sourceLabel">Nguồn: dữ liệu mẫu</div>
+        <div style="margin-left:auto;text-align:right;">
+          <div class="qd-source" id="sourceLabel">Nguồn: dữ liệu mẫu</div>
+          <button type="button" class="link-btn" id="btnClearSaved" style="display:none;font-size:11.5px;margin-top:4px;">Xóa dữ liệu đã lưu, dùng lại mẫu gốc</button>
+        </div>
       </div>
 
       <div class="error-box" id="dashNotice"></div>
@@ -648,6 +650,7 @@ const DEFAULT_TRONGTAM = [{"pic":"Vũ Trọng Giáp","content":["TEST"]},{"pic":
   const panelTrongTam = document.getElementById('panelTrongTam');
   const dataDot = document.getElementById('dataDot');
   const sourceLabel = document.getElementById('sourceLabel');
+  const btnClearSaved = document.getElementById('btnClearSaved');
   const quickDrop = document.getElementById('quickDrop');
   const quickBrowse = document.getElementById('quickBrowse');
   const dragOverlay = document.getElementById('dragOverlay');
@@ -721,6 +724,11 @@ const DEFAULT_TRONGTAM = [{"pic":"Vũ Trọng Giáp","content":["TEST"]},{"pic":
 
   btnPrint.addEventListener('click', () => window.print());
 
+  btnClearSaved.addEventListener('click', () => {
+    clearSavedDefault();
+    loadDefaultData();
+  });
+
   function showError(msg){
     errorBox.classList.remove('warn');
     errorBox.textContent = msg;
@@ -749,13 +757,62 @@ const DEFAULT_TRONGTAM = [{"pic":"Vũ Trọng Giáp","content":["TEST"]},{"pic":
     return rawRows.map(r => ({ ...r, ngay: r.ngay ? new Date(r.ngay + 'T00:00:00') : null }));
   }
 
+  // ---------- Persist last upload as the new default (works when this file
+  // is opened directly in a browser; browser storage is unavailable inside
+  // Claude.ai's in-chat preview, so saving will silently no-op there). ----------
+  const LS_KEYS = { data:'atvsld_saved_data', trongtam:'atvsld_saved_trongtam', source:'atvsld_saved_source' };
+
+  function saveAsDefault(rows, trongTam, sourceName){
+    try {
+      const serializable = rows.map(r => ({ ...r, ngay: r.ngay ? r.ngay.toISOString().slice(0,10) : null }));
+      localStorage.setItem(LS_KEYS.data, JSON.stringify(serializable));
+      localStorage.setItem(LS_KEYS.trongtam, JSON.stringify(trongTam || []));
+      localStorage.setItem(LS_KEYS.source, sourceName);
+    } catch (e) {
+      console.warn('Không thể lưu dữ liệu làm mặc định (bộ nhớ trình duyệt không khả dụng):', e);
+    }
+  }
+
+  function loadSavedDefault(){
+    try {
+      const raw = localStorage.getItem(LS_KEYS.data);
+      if (!raw) return null;
+      return {
+        rows: JSON.parse(raw),
+        trongTam: JSON.parse(localStorage.getItem(LS_KEYS.trongtam) || '[]'),
+        source: localStorage.getItem(LS_KEYS.source) || 'file đã nạp trước đó',
+      };
+    } catch (e) { return null; }
+  }
+
+  function clearSavedDefault(){
+    try {
+      localStorage.removeItem(LS_KEYS.data);
+      localStorage.removeItem(LS_KEYS.trongtam);
+      localStorage.removeItem(LS_KEYS.source);
+    } catch (e) {}
+  }
+
+  function updateClearSavedBtn(){
+    if (!btnClearSaved) return;
+    btnClearSaved.style.display = loadSavedDefault() ? 'inline-block' : 'none';
+  }
+
   function loadDefaultData(){
     usingDefault = true;
-    render(hydrate(DEFAULT_DATA));
-    renderTrongTam(DEFAULT_TRONGTAM);
+    const saved = loadSavedDefault();
+    if (saved && saved.rows && saved.rows.length) {
+      render(hydrate(saved.rows));
+      renderTrongTam(saved.trongTam && saved.trongTam.length ? saved.trongTam : DEFAULT_TRONGTAM);
+      sourceLabel.textContent = 'Nguồn: ' + saved.source + ' (đã lưu làm mặc định)';
+    } else {
+      render(hydrate(DEFAULT_DATA));
+      renderTrongTam(DEFAULT_TRONGTAM);
+      sourceLabel.textContent = 'Nguồn: dữ liệu mẫu';
+    }
     showDashboardWithData();
-    sourceLabel.textContent = 'Nguồn: dữ liệu mẫu';
     clearNotices();
+    updateClearSavedBtn();
   }
 
   function handleFile(file){
@@ -777,6 +834,8 @@ const DEFAULT_TRONGTAM = [{"pic":"Vũ Trọng Giáp","content":["TEST"]},{"pic":
         showDashboardWithData();
         sourceLabel.textContent = 'Nguồn: ' + file.name;
         setTab('dashboard');
+        saveAsDefault(rows, trongTam && trongTam.length ? trongTam : [], file.name);
+        updateClearSavedBtn();
         if (!trongTam || !trongTam.length) {
           showWarning('Đã nạp thành công dữ liệu thống kê, nhưng không tìm thấy sheet "VẤN ĐỀ TRỌNG TÂM" (cột PIC · Nội dung cần cải thiện) trong file — tab 03 tạm thời vẫn hiển thị dữ liệu mẫu.');
         }
