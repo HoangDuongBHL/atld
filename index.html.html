@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -6,6 +7,7 @@
 <title>Bảng điều khiển ATVSLĐ</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
@@ -366,13 +368,13 @@
 </header>
 <div class="hazard-stripe"></div>
 <nav class="tabbar">
-  <button id="tabBtnUpload" class="active" data-tab="upload"><span class="tnum">01</span> Nạp dữ liệu</button>
-  <button id="tabBtnDashboard" data-tab="dashboard"><span class="tnum">02</span> Dashboard <span class="dot" id="dataDot"></span></button>
+  <button id="tabBtnUpload" data-tab="upload"><span class="tnum">01</span> Nạp dữ liệu</button>
+  <button id="tabBtnDashboard" class="active" data-tab="dashboard"><span class="tnum">02</span> Dashboard <span class="dot" id="dataDot"></span></button>
 </nav>
 
 <main>
 
-  <section id="panelUpload" class="panel active">
+  <section id="panelUpload" class="panel">
     <div id="uploadView">
       <div class="empty-hero">
         <span class="num">00</span>
@@ -397,7 +399,7 @@
     </div>
   </section>
 
-  <section id="panelDashboard" class="panel">
+  <section id="panelDashboard" class="panel active">
 
     <div class="dash-empty" id="dashEmpty">
       <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#B97D22" stroke-width="1.6">
@@ -413,7 +415,14 @@
 
       <div class="meta-row">
         <h2 id="reportTitle">Báo cáo tổng hợp ATVSLĐ</h2>
-        <div class="period mono" id="reportPeriod">—</div>
+        <div style="text-align:right;">
+          <div class="period mono" id="reportPeriod">—</div>
+          <div class="period mono" id="sourceLabel" style="margin-top:2px;color:var(--amber-dark);">—</div>
+        </div>
+      </div>
+      <div class="callout" id="defaultBanner" style="display:none;margin-bottom:24px;">
+        Đang hiển thị <strong>dữ liệu mẫu</strong> (file thống kê ATVSLĐ đã nạp trước đó). Chuyển sang tab
+        <strong>"Nạp dữ liệu"</strong> để tải lên file của riêng bạn — dashboard sẽ tự động cập nhật theo dữ liệu mới.
       </div>
 
       <div class="kpi-grid" id="kpiGrid"></div>
@@ -470,6 +479,9 @@
 <footer>ATVSLĐ DASHBOARD — DỮ LIỆU XỬ LÝ CỤC BỘ TRONG TRÌNH DUYỆT</footer>
 
 <script>
+const DEFAULT_DATA = [{"ngay":"2026-05-27","khuVuc":"Hạ Long","donVi":"Khu vực xuất hàng Hạ Long","pic":"Vũ Trọng Giáp","vanDe":"- Xe nâng thực hiện xuất hàng mất nóc bảo vệ đang đc thay bằng bìa và băng dính tạm, kính chiếu hậu vỡ.","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-05-27","khuVuc":"Hạ Long","donVi":"Trạm xử lý nước thải Hạ Long","pic":"Vũ Minh Cường","vanDe":"- Không có khu vực rửa tay cho CBNV sau khi tiếp xúc với hoá chất (CBNV đang sử dụng vòi cứu hoả để rửa tay)\r\n -> nguy cơ khi phát sinh việc hoá chất bắn vào các vùng nhạy cảm như mắt, không được xử lý rửa kịp thời.","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Chưa khắc phục"},{"ngay":"2026-05-27","khuVuc":"Hạ Long","donVi":"PXSX Hạ Long","pic":"Trần Vũ Minh Hiệp","vanDe":"- Bình khí nén không có đai bảo vệ nguy cơ mất an toàn nếu đổ,…","nhom":"ATLĐ","mucDo":"Khẩn cấp","soLuong":2,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-05-27","khuVuc":"Hạ Long","donVi":"PXSX Hạ Long","pic":"Trần Vũ Minh Hiệp","vanDe":"Rò rỉ hơi máy…","nhom":"ATLĐ","mucDo":"Khẩn cấp","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Chưa khắc phục"},{"ngay":"2026-05-27","khuVuc":"Hạ Long","donVi":"PXSX Hạ Long","pic":"Trần Vũ Minh Hiệp","vanDe":"Công nhân vần vỏ keg không đi giày bảo hộ (đi giày vải)","nhom":"PPE","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-05-27","khuVuc":"Hạ Long","donVi":"Kho nguyên liệu Hạ Long","pic":"Phạm Thúy Hằng","vanDe":"Công nhân bốc malt cởi trần, không trang bị BHLĐ trong quá trình làm việc","nhom":"PPE","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-05-27","khuVuc":"Đông Mai","donVi":"Lò hơi Đông Mai","pic":"Bùi Duy Ngọc","vanDe":"Công nhân vận hành không đi giày bảo hộ","nhom":"PPE","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-05-27","khuVuc":"Đông Mai","donVi":"Cửa xưởng chiết bia hơi, bia tươi Đông Mai","pic":"Vũ Trọng Giáp","vanDe":"- Palet xếp keg bia thành phẩm xếp chồng cao, bị nghiêng, lệch -> nguy cơ đổ, mất an toàn cao","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-05-27","khuVuc":"Đông Mai","donVi":"Tank chứa bã Đông Mai","pic":"Nguyễn Thị Mai Hương","vanDe":"Nhà thầu lấy bã tác phong ăn mặc vẫn chưa tuân thủ quy định","nhom":"PPE","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-05-27","khuVuc":"Đông Mai","donVi":"Thi công silo, nhà nạp liệu Đông Mai","pic":"Nguyễn Hữu Hiệp","vanDe":"- Nhà thầu ko căng dây an toàn khu vực thi công","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Biên bản","trangThai":"Đã khắc phục"},{"ngay":"2026-05-28","khuVuc":"Đông Mai","donVi":"Khu vực nhập liệu Đông Mai","pic":"Phạm Thúy Hằng","vanDe":"NCC mặc quần lửng vào nhà máy","nhom":"PPE","mucDo":"Trung bình","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-05-29","khuVuc":"Hạ Long","donVi":"Khu vực máy lạnh Hạ Long","pic":"Vũ Minh Cường","vanDe":"- Tôn sắc và thanh sắt thò ra đường đi gần khu cửa khó máy lạnh","nhom":"ATLĐ","mucDo":"Trung bình","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Chưa khắc phục"},{"ngay":"2026-05-29","khuVuc":"Đông Mai","donVi":"Khu vực nhà CIP Đông Mai","pic":"Cao Bảo Đồng","vanDe":"- Thiết bị rửa mắt chưa được vệ sinh, kiểm tra thường xuyên, \r\n- Đầu phun đặt trong tình trạng mất vệ sinh, không đậy nắp bảo vệ đầu phun, tiềm ẩn nguy cơ không sử dụng hiệu quả khi khẩn cấp","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-05-29","khuVuc":"Đông Mai","donVi":"Khu vực tủ điện dây chuyền Đông Mai","pic":"Bùi Duy Ngọc","vanDe":"- Cửa tủ điện không đóng kín hoàn toàn, không bảo đảm yêu cầu an toàn trong vận hành thiết bị điện, tiềm ẩn nguy cơ tiếp xúc với thiết bị điện","nhom":"ATLĐ","mucDo":"Khẩn cấp","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đang khắc phục"},{"ngay":"2026-05-29","khuVuc":"Đông Mai","donVi":"Khu vực tủ phân phối điện Đông Mai","pic":"Bùi Duy Ngọc","vanDe":"- Sau khi sửa chữa/bảo trì, thiết bị chưa được lắp lại đầy đủ tấm che bảo vệ, không bảo đảm an toàn trong quá trình vận hành.","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-06-01","khuVuc":"Hạ Long","donVi":"Nhà điều hành Hạ Long","pic":"Vũ Trọng Giáp","vanDe":"- Tường nhà điều hành văn phòng HL bị xe tải lùi va đập vỡ nguy cơ mất an toàn","nhom":"ATLĐ","mucDo":"Trung bình","soLuong":1,"hinhThuc":"Biên bản","trangThai":"Đã khắc phục"},{"ngay":"2026-06-02","khuVuc":"Đông Mai","donVi":"Khu vực lạnh - nén khí -CO2 Đông Mai","pic":"Bùi Duy Ngọc","vanDe":"- Bình khí nén đặt trực tiếp trên nền, không được cố định bằng xích hoặc giá đỡ chống đổ ngã, tiềm ẩn nguy cơ va đập làm hư hỏng van bình và mất an toàn","nhom":"ATLĐ","mucDo":"Khẩn cấp","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đang khắc phục"},{"ngay":"2026-06-02","khuVuc":"Đông Mai","donVi":"Khu vực lạnh - nén khí -CO2 Đông Mai","pic":"Bùi Duy Ngọc","vanDe":"- Nước ngưng tụ từ hệ thống lạnh/đường ống CO₂ chảy xuống sàn, gây trơn trượt, tiềm ẩn nguy cơ té ngã cho người lao động.","nhom":"ATLĐ","mucDo":"Trung bình","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-06-02","khuVuc":"Đông Mai","donVi":"Kho hóa chất Đông Mai","pic":"Phạm Thúy Hằng","vanDe":"- Thiết bị rửa mắt không vệ sinh, kiểm tra thường xuyên, đầu phun đặt trong tình trạng mất vệ sinh, không đậy nắp bảo vệ đầu phun, tiềm ẩn nguy cơ không sử dụng hiệu quả khi khẩn cấp","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-06-03","khuVuc":"Hạ Long","donVi":"Kho thành phẩm số 2 Hạ Long","pic":"Vũ Trọng Giáp","vanDe":"- Kệ hàng nghiêng nguy cơ đổ, vỡ","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-06-03","khuVuc":"Hạ Long","donVi":"Kho thành phẩm Hạ Long","pic":"Vũ Trọng Giáp","vanDe":"- Cửa cuốn kho bị xe nâng va chạm gây biến dạng cửa cuốn","nhom":"ATLĐ","mucDo":"","soLuong":1,"hinhThuc":"","trangThai":"Đã khắc phục"},{"ngay":"2026-06-03","khuVuc":"Đông Mai","donVi":"Khu vực nhà lạnh Đông Mai","pic":"Bùi Duy Ngọc","vanDe":"Công nhân vận hành không đi giày bảo hộ","nhom":"PPE","mucDo":"Cao","soLuong":1,"hinhThuc":"Biên bản","trangThai":"Đã khắc phục"},{"ngay":"2026-06-03","khuVuc":"Đông Mai","donVi":"Xử lý nước thải Đông Mai","pic":"Bùi Duy Ngọc","vanDe":"- Can chứa hóa chất Javen đặt trên giá của Polymer (chưa có khay chống tràn hóa chất);\r\n- Thiết bị rửa mắt khẩn cấp đọng nước, cặn bẩn, tạp chất.","nhom":"ATLĐ","mucDo":"Khẩn cấp","soLuong":1,"hinhThuc":"Biên bản","trangThai":"Đã khắc phục"},{"ngay":"2026-06-03","khuVuc":"Hạ Long","donVi":"Silo bã bia Hạ Long","pic":"Nguyễn Thị Mai Hương","vanDe":"- Nhà thầu lấy bã đã được đào tạo quy định của nhà máy nhưng tác phong ăn mặc vẫn chưa tuân thủ","nhom":"PPE","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-06-05","khuVuc":"Đông Mai","donVi":"Cây dầu Đông Mai","pic":"Nguyễn Hữu Hiệp","vanDe":"- Mép bệ bê tông khu vực cột bơm không được sơn cảnh báo vàng - đen.\r\n- Cột inox bảo vệ bị móp méo, biến dạng do va chạm.","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Chưa khắc phục"},{"ngay":"2026-06-05","khuVuc":"Đông Mai","donVi":"Lòi hơi Đông Mai","pic":"Bùi Duy Ngọc","vanDe":"- Nắp hố ga/hố kỹ thuật bị hư hỏng, sụt vỡ nghiêm trọng.\r\n- Lộ khoảng trống lớn và cốt thép bên trong.\r\n- Khu vực không có rào chắn, biển cảnh báo hoặc biện pháp cô lập","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đang khắc phục"},{"ngay":"2026-06-08","khuVuc":"Đông Mai","donVi":"Silo bã bia Đông Mai","pic":"Bùi Duy Ngọc","vanDe":"- Công nhân PXCĐ thực hiện công việc trên giàn giáo ở độ cao trên 2m không thấy sử dụng dây đai an toàn toàn thân và mũ bảo hộ.\r\n- Khu vực bên dưới không được thiết lập rào chắn, cảnh báo\r\nNgười vi phạm không ký biên bản","nhom":"ATLĐ","mucDo":"Khẩn cấp","soLuong":1,"hinhThuc":"Biên bản","trangThai":"Đã khắc phục"},{"ngay":"2026-06-09","khuVuc":"Đông Mai","donVi":"Silo bã bia Đông Mai","pic":"Nguyễn Thị Mai Hương","vanDe":"- Nhà thầu lấy bã đã được đào tạo quy định của nhà máy nhưng tác phong ăn mặc vẫn chưa tuân thủ (Nhà thầu Minh Vũ 3H)","nhom":"PPE","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-06-12","khuVuc":"Đông Mai","donVi":"Khu vực xuất hàng Đông Mai","pic":"Cao Bảo Đồng","vanDe":"- Xe nâng hỏng đã ngừng hoạt động và được lưu giữ trong thời gian dài, chưa được sửa chữa hoặc xử lý dứt điểm. \r\n- Thiết bị có dấu hiệu xuống cấp, nhiều chi tiết bị tháo dỡ, bám bụi và chiếm dụng diện tích làm việc.","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Chưa khắc phục"},{"ngay":"2026-06-12","khuVuc":"Đông Mai","donVi":"Khu vực xuất hàng Đông Mai (vị trí máy cuốn màng co)","pic":"Vũ Trọng Giáp","vanDe":"- Công nhân tại khu vực không đi giày bảo hộ (mang giày vải)\r\n(Không bảo vệ được bàn chân khi xảy ra va đập với pallet, kiện hàng, xe nâng hoặc vật rơi).","nhom":"PPE","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đang khắc phục"},{"ngay":"2026-06-12","khuVuc":"Đông Mai","donVi":"Silo bã bia Đông Mai","pic":"Nguyễn Thị Mai Hương","vanDe":"- Xe nhà thầu vận chuyển bã malt có thùng chứa không kín, làm rò rỉ nước bã ra đường nội bộ/ khi di chuyển ngoài đường.\r\n- Trong quá trình vệ sinh, công nhân xịt rửa nước thải và cặn bã chảy vào rãnh thoát nước mưa.\r\nNguy cơ/rủi ro:\r\n- Nước thải chảy vào rãnh nước mưa của nhà máy;\r\n- Gây mất vệ sinh môi trường, nước bã có thể tiếp tục rò rỉ ra đường giao thông bên ngoài nhà máy, ảnh hưởng hình ảnh, uy tín Công ty và có nguy cơ phát sinh khiếu nại hoặc vi phạm quy định môi trường.","nhom":"MT","mucDo":"Khẩn cấp","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Chưa khắc phục"},{"ngay":"2026-06-12","khuVuc":"Đông Mai","donVi":"Tủ điện khu vực sản xuất (đối diện dây chuyền chai) Đông Mai","pic":"Nguyễn Hữu Hiệp","vanDe":"- Cửa phòng/tủ điện thường xuyên không được đóng kín sau khi ra vào.\r\n- Hệ thống cửa lùa bị lệch, kéo mở và đóng khó khăn.\r\n- Cửa ra vào tủ điện bên trong đang mở nhưng khó đóng kín lại sau khi thao tác.\r\n- Việc quản lý đóng cửa sau khi kiểm tra, vận hành chưa được thực hiện nghiêm túc.","nhom":"ATLĐ","mucDo":"Cao","soLuong":2,"hinhThuc":"Nhắc nhở","trangThai":"Chưa khắc phục"},{"ngay":"2026-06-12","khuVuc":"Hạ Long","donVi":"Khu vực lưu trữ bình CO2 Hạ Long","pic":"Vũ Trọng Giáp","vanDe":"- Vị trí đặt bình ngoài trời, tiếp xúc trực tiếp với thời tiết (mưa, nắng). không có hệ thống che chắn.\r\n- Tình trạng lưu trữ: Bình được đặt trực tiếp trên pallet nhựa, cố định bằng màng co không đảm bảo an toàn, xếp chồng cao. Có 01 bình đổ lăn ra khỏi vị trí.\r\nRủi ro mất an toàn\r\n- Bình CO2 được để ngoài trời tiếp xúc trực tiếp với ánh nắng mặt trời nguy cơ làm tăng áp suất bên trong bình, nguy cơ bị gỉ sét/sụt áp hoặc kẹt van dẫn đến không sử dụng được.\r\n- Bình được cố định bằng màng co; xếp trông cao không có xích khóa hay các vật dụng cố định an toàn khác, bình có hiện tượng bị rơi/tụt lăn ra khỏi vị trí lưu trữ. Tiềm ẩn nguy cơ","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-06-12","khuVuc":"Hạ Long","donVi":"Gia nhiệt nước nóng tổ đóng gói Hạ Long","pic":"Vũ Minh Cường","vanDe":"Rò Steam","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đang khắc phục"},{"ngay":"2026-06-12","khuVuc":"Hạ Long","donVi":"Khu vực tổ lọc Hạ Long","pic":"Trần Vũ Minh Hiệp","vanDe":"Bình C02 không có đai bảo vệ có thể gây đổ","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-06-12","khuVuc":"Hạ Long","donVi":"Khu vực đặt bình ga của nhà ăn Hạ Long","pic":"Nguyễn Thị Mai Hương","vanDe":"Khu vực để gas thiếu cảnh báo, phuơng án kiểm soát an toàn","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Chưa khắc phục"},{"ngay":"2026-06-13","khuVuc":"Hạ Long","donVi":"Khu vực nhà nấu Hạ Long","pic":"Trần Vũ Minh Hiệp","vanDe":"- Nhiệt độ môi trường làm việc ở mức cao (phòng điều hành nấu)\r\n- Ảnh hưởng sức khỏe, gây mệt mỏi, giảm khả năng tập trung của người vận hành.\r\n- Ảnh hưởng đến điều kiện làm việc và năng suất lao động của nhân viên vận hành.","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đang khắc phục"},{"ngay":"2026-06-13","khuVuc":"Đông Mai","donVi":"Khu vực xuất hàng Đông Mai","pic":"Vũ Trọng Giáp","vanDe":"Lái xe Công ty mặc quần đùi, đi dép lê khi thực hiện công việc trong khu vực nhà máy.","nhom":"PPE","mucDo":"Cao","soLuong":1,"hinhThuc":"Biên bản","trangThai":"Đã khắc phục"},{"ngay":"2026-06-15","khuVuc":"Hạ Long","donVi":"Khu vực xếp keg của dây chuyền","pic":"Trần Vũ Minh Hiệp","vanDe":"- Khu vực xếp keg của dây chuyền không đảm bảo an toàn -> Lăn, rơi vào người lao động hoặc xuống đất","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":""},{"ngay":"2026-06-17","khuVuc":"Hạ Long","donVi":"Khu vực lưu trữ CO2 chờ xuất (trước chòi hút thuốc)","pic":"Vũ Trọng Giáp","vanDe":"Bình CO2 đặt nằm trực tiếp lên pallet nhựa, không có thiết bị cố định","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-06-17","khuVuc":"Đông Mai","donVi":"Tại khu vực bia hơi, bia tươi","pic":"Cao Bảo Đồng","vanDe":"- Ổ cắm và dây dẫn điện được đấu nối tạm thời, dây điện kéo nổi qua khu vực làm việc -> Nguy cơ điện giật, chập cháy do thiết bị điện để hở và dây dẫn kéo nổi; đặc biệt khu vực thường xuyên có nước, độ ẩm cao và người lao động qua lại sử dụng cây nước uống","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-06-19","khuVuc":"Đông Mai","donVi":"Khu vực XLNT: Vị trí lấy bùn bể U phục vụ test vi sinh","pic":"Cao Bảo Đồng","vanDe":"- Vị trí lấy bùn bể U phục vụ test vi sinh bị palet/gông nhựa chắn lối tiếp cận, gây khó khăn cho thao tác lấy mẫu và tiềm ẩn nguy cơ mất an toàn khi di chuyển, thao tác.","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Chưa khắc phục"},{"ngay":"2026-06-19","khuVuc":"Đông Mai","donVi":"Khu vực rửa tay PXCĐ","pic":"Nguyễn Thị Mai Hương","vanDe":"- Chưa đấu nối nước thải về hệ thống thu gom nước thải, hiện nước thải xả trực tiếp vào rãnh thoát nước mưa.","nhom":"MT","mucDo":"Khẩn cấp","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-06-19","khuVuc":"Đông Mai","donVi":"Khu vực PXCĐ","pic":"Bùi Duy Ngọc","vanDe":"PXCĐ lắp máng đi vệ sinh tại khu vực, nước thải phát sinh hiện chảy trực tiếp vào rãnh thoát nước mưa\r\n- Nước thải chảy vào rãnh nước mưa gây mất vệ sinh môi trường.\r\n- Nguy cơ phát sinh mùi, cặn bẩn và ô nhiễm cục bộ.\r\n- Không đảm bảo yêu cầu phân luồng nước thải – nước mưa theo giấy phép môi trường -> vi phạm quy định môi trường -> Rủi ro bị xử phạt","nhom":"MT","mucDo":"Khẩn cấp","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-06-20","khuVuc":"Hạ Long","donVi":"Khu vực tường đối diện kho VPQC","pic":"Nguyễn Hữu Hiệp","vanDe":"Thi công sửa chữa tường gạch ốp khu vực văn phòng Hạ Long chưa đăng ký thi công; chưa đào tạo an toàn","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Biên bản","trangThai":"Đã khắc phục"},{"ngay":"2026-06-20","khuVuc":"Hạ Long","donVi":"Kho nguyên liệu","pic":"Phạm Thúy Hằng","vanDe":"Nhà thầu nhập nguyên liệu vào nhà máy nhưng không đảm bảo PPE (cởi trần; mặc quần đùi; đi chân đất)","nhom":"PPE","mucDo":"Cao","soLuong":1,"hinhThuc":"Biên bản","trangThai":"Đã khắc phục"},{"ngay":"2026-06-22","khuVuc":"Hạ Long","donVi":"Kho bia số 1","pic":"Vũ Trọng Giáp","vanDe":"- Rào chắn bảo vệ bị va chạm, cong lệch;\r\n- Chân đế xuất hiện tình trạng nứt vỡ bê tông, bong tróc xung quanh bu lông, một số bu lông có dấu hiệu lỏng hoặc thiếu","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-06-22","khuVuc":"Hạ Long","donVi":"Cổng ra-vào","pic":"Vũ Trọng Giáp","vanDe":"- Nhân viên lái xe chưa tuân thủ quy định về trang phục và an toàn lao động.","nhom":"PPE","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-06-24","khuVuc":"Đông Mai","donVi":"Khu vực xuất hàng – kho thành phẩm","pic":"Vũ Trọng Giáp","vanDe":"- Trụ cột khung cửa cuốn và bu lông bắt bản mã chân cột bị cong vênh, móp méo do va chạm;\r\n- Chân đế có dấu hiệu xuống cấp.\r\n- Cửa cuốn xuất hàng bị biến dạng/lệch.","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-06-24","khuVuc":"Đông Mai","donVi":"Khu vực xuất hàng – kho thành phẩm","pic":"Vũ Trọng Giáp","vanDe":"- Xe nâng: xước xe, bong sơn","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-06-26","khuVuc":"Đông Mai","donVi":"Khu vực xuất hàng – kho thành phẩm","pic":"Vũ Trọng Giáp","vanDe":"- Nhân viên lái xe nâng không mặc bảo hộ","nhom":"PPE","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đã khắc phục"},{"ngay":"2026-06-27","khuVuc":"Hạ Long","donVi":"Khu vực sản xuất","pic":"Trần Vũ Minh Hiệp","vanDe":"- Bồn rửa tay có nguy cơ rơi","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":""},{"ngay":"2026-06-27","khuVuc":"Hạ Long","donVi":"Khu vực bãi than lò hơi","pic":"Vũ Minh Cường","vanDe":"- Tập kết lẫn nhiều loại vật liệu/phế liệu và rác thải, bố trí chưa gọn gàng, chưa phân khu rõ ràng","nhom":"MT","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":""},{"ngay":"2026-06-29","khuVuc":"Hạ Long","donVi":"Nhà nấu","pic":"Trần Vũ Minh Hiệp","vanDe":"- Rò rỉ nước nồi gạo nguy cơ gây trơn trượt","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":""},{"ngay":"2026-06-29","khuVuc":"Hạ Long","donVi":"Tank lên men","pic":"Trần Vũ Minh Hiệp","vanDe":"- Sàn ướt trơn trượt","nhom":"ATLĐ","mucDo":"Cao","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":""},{"ngay":"2026-07-02","khuVuc":"Đông Mai","donVi":"Nhà bếp Đông Mai","pic":"Cao Bảo Đồng","vanDe":"- Khu vực rửa thực phẩm ngoài trời chưa có mái che","nhom":"ATLĐ","mucDo":"Trung bình","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":""},{"ngay":"2026-07-02","khuVuc":"Hạ Long","donVi":"Khu vực chiết keg và CIP trung tâm-nấu","pic":"Trần Vũ Minh Hiệp","vanDe":"- Một số vị trí chưa có biển tên hóa chất, chưa niêm yết MSDS, chưa có khay chống tràn hóa chất","nhom":"ATLĐ","mucDo":"Khẩn cấp","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":""},{"ngay":"2026-07-06","khuVuc":"Hạ Long","donVi":"Trước cửa phòng ĐHTT (kho VPQC)","pic":"Vũ Trọng Giáp","vanDe":"- Tường, cột chống nứt vỡ, bị rơi vữa","nhom":"ATLĐ","mucDo":"Khẩn cấp","soLuong":1,"hinhThuc":"Nhắc nhở","trangThai":"Đang khắc phục"}];
+</script>
+<script>
 (function(){
   const dropzone = document.getElementById('dropzone');
   const fileInput = document.getElementById('fileInput');
@@ -485,8 +497,11 @@
   const panelUpload = document.getElementById('panelUpload');
   const panelDashboard = document.getElementById('panelDashboard');
   const dataDot = document.getElementById('dataDot');
+  const defaultBanner = document.getElementById('defaultBanner');
+  const sourceLabel = document.getElementById('sourceLabel');
   let charts = [];
   let hasData = false;
+  let usingDefault = true;
 
   function setTab(name){
     const onUpload = name === 'upload';
@@ -512,14 +527,9 @@
   fileInput.addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0]); });
 
   btnReset.addEventListener('click', () => {
-    hasData = false;
-    dashboard.style.display = 'none';
-    dashEmpty.style.display = 'block';
-    dataDot.classList.remove('show');
     fileInput.value = '';
     errorBox.style.display = 'none';
-    charts.forEach(c => c.destroy());
-    charts = [];
+    loadDefaultData();
     setTab('upload');
   });
 
@@ -528,6 +538,25 @@
   function showError(msg){
     errorBox.textContent = msg;
     errorBox.style.display = 'block';
+  }
+
+  function showDashboardWithData(){
+    hasData = true;
+    dashEmpty.style.display = 'none';
+    dashboard.style.display = 'block';
+    dataDot.classList.add('show');
+  }
+
+  function hydrate(rawRows){
+    return rawRows.map(r => ({ ...r, ngay: r.ngay ? new Date(r.ngay + 'T00:00:00') : null }));
+  }
+
+  function loadDefaultData(){
+    usingDefault = true;
+    render(hydrate(DEFAULT_DATA));
+    showDashboardWithData();
+    defaultBanner.style.display = 'block';
+    sourceLabel.textContent = 'Nguồn: dữ liệu mẫu';
   }
 
   function handleFile(file){
@@ -542,11 +571,11 @@
           showError('Không tìm thấy dữ liệu phù hợp trong file. Vui lòng kiểm tra file có sheet chứa các cột: Ngày, Khu vực, PIC, Nhóm vi phạm, Trạng thái…');
           return;
         }
+        usingDefault = false;
         render(rows);
-        hasData = true;
-        dashEmpty.style.display = 'none';
-        dashboard.style.display = 'block';
-        dataDot.classList.add('show');
+        showDashboardWithData();
+        defaultBanner.style.display = 'none';
+        sourceLabel.textContent = 'Nguồn: ' + file.name;
         setTab('dashboard');
       } catch (err) {
         console.error(err);
@@ -657,10 +686,21 @@
   }
 
   // ---------- Rendering ----------
+  if (window.ChartDataLabels) { Chart.register(ChartDataLabels); }
+  Chart.defaults.font.family = "'Inter', sans-serif";
+
   const SEV_ORDER = { 'Khẩn cấp': 3, 'Cao': 2, 'Trung bình': 1, 'Thấp': 0 };
   const SEV_COLOR = { 'Khẩn cấp':'#C4432E', 'Cao':'#E8A33D', 'Trung bình':'#3C8A5A', 'Thấp':'#6B7280' };
   const STATUS_COLOR = { 'Đã khắc phục':'#3C8A5A', 'Đang khắc phục':'#E8A33D', 'Chưa khắc phục':'#C4432E', 'Chưa cập nhật':'#9AA0A6' };
+  const GROUP_COLOR = { 'ATLĐ':'#E8A33D', 'PPE':'#3E6E68', 'MT':'#C4432E' };
   const PALETTE = ['#E8A33D','#3E6E68','#C4432E','#6B7280','#B97D22','#1B1F24'];
+
+  function contrastColor(hex){
+    const c = hex.replace('#','');
+    const r = parseInt(c.substr(0,2),16), g = parseInt(c.substr(2,2),16), b = parseInt(c.substr(4,2),16);
+    const yiq = (r*299 + g*587 + b*114) / 1000;
+    return yiq >= 150 ? '#1B1F24' : '#FFFFFF';
+  }
 
   function fmtDate(d){
     if (!d) return '—';
@@ -729,30 +769,58 @@
     // ---- Chart 1: Area x Group stacked ----
     const areas = Object.keys(areaCounts);
     const groups = [...new Set(rows.map(r=>r.nhom || 'Khác'))];
-    const areaGroupData = groups.map((g,i) => ({
-      label: g,
-      data: areas.map(a => rows.filter(r => r.khuVuc===a && (r.nhom||'Khác')===g).length),
-      backgroundColor: PALETTE[i % PALETTE.length],
-    }));
+    const areaGroupData = groups.map((g,i) => {
+      const color = GROUP_COLOR[g] || PALETTE[i % PALETTE.length];
+      return {
+        label: `${g}`,
+        data: areas.map(a => rows.filter(r => r.khuVuc===a && (r.nhom||'Khác')===g).length),
+        backgroundColor: color,
+        datalabels: { color: contrastColor(color) },
+      };
+    });
     charts.push(new Chart(document.getElementById('chartAreaGroup'), {
       type:'bar',
       data:{ labels: areas, datasets: areaGroupData },
       options:{
         responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{ position:'bottom', labels:{ font:{family:'Inter', size:11.5} } } },
-        scales:{ x:{ stacked:true, grid:{display:false} }, y:{ stacked:true, beginAtZero:true, ticks:{precision:0} } }
+        plugins:{
+          legend:{ position:'bottom', labels:{ font:{family:'Inter', size:12}, padding:14, usePointStyle:true, pointStyle:'rectRounded' } },
+          tooltip:{ callbacks:{ label:(ctx)=>` ${ctx.dataset.label}: ${ctx.parsed.y} vụ` } },
+          datalabels:{ font:{family:'IBM Plex Mono', size:12, weight:'600'}, formatter:(v)=> v>0 ? v : '' }
+        },
+        scales:{
+          x:{ stacked:true, grid:{display:false}, ticks:{font:{size:12.5,weight:'600'}} },
+          y:{ stacked:true, beginAtZero:true, ticks:{precision:0}, title:{display:true,text:'Số vụ',font:{size:11.5}}, grid:{color:'#EFEAE0'} }
+        }
       }
     }));
 
     // ---- Chart 2: Status doughnut ----
     const statusKeys = ['Đã khắc phục','Đang khắc phục','Chưa khắc phục','Chưa cập nhật'];
     const statusCounts = statusKeys.map(s => rows.filter(r => statusOf(r.trangThai)===s).length);
+    const statusTotal = statusCounts.reduce((a,b)=>a+b,0);
     charts.push(new Chart(document.getElementById('chartStatus'), {
       type:'doughnut',
-      data:{ labels: statusKeys, datasets:[{ data: statusCounts, backgroundColor: statusKeys.map(s=>STATUS_COLOR[s]) }] },
+      data:{ labels: statusKeys, datasets:[{ data: statusCounts, backgroundColor: statusKeys.map(s=>STATUS_COLOR[s]), borderWidth:2, borderColor:'#fff' }] },
       options:{
-        responsive:true, maintainAspectRatio:false, cutout:'62%',
-        plugins:{ legend:{ position:'bottom', labels:{ font:{family:'Inter', size:11.5} } } }
+        responsive:true, maintainAspectRatio:false, cutout:'60%',
+        plugins:{
+          legend:{ position:'bottom', labels:{ font:{family:'Inter', size:12}, padding:14, usePointStyle:true, pointStyle:'circle',
+            generateLabels: (chart) => chart.data.labels.map((l,i) => ({
+              text:`${l} (${chart.data.datasets[0].data[i]})`,
+              fillStyle: chart.data.datasets[0].backgroundColor[i],
+              strokeStyle: chart.data.datasets[0].backgroundColor[i],
+              pointStyle:'circle', hidden:false, index:i
+            }))
+          } },
+          tooltip:{ callbacks:{ label:(ctx)=>` ${ctx.label}: ${ctx.parsed} vụ (${Math.round(ctx.parsed/statusTotal*100)}%)` } },
+          datalabels:{
+            color: (ctx)=> contrastColor(ctx.dataset.backgroundColor[ctx.dataIndex]),
+            font:{family:'IBM Plex Mono', size:12, weight:'600'},
+            formatter:(v)=> v>0 ? [String(v), `${Math.round(v/statusTotal*100)}%`] : '',
+            textAlign:'center'
+          }
+        }
       }
     }));
 
@@ -762,14 +830,22 @@
       label:s,
       data: sevKeys.map(sv => rows.filter(r=>r.mucDo===sv && statusOf(r.trangThai)===s).length),
       backgroundColor: STATUS_COLOR[s],
+      datalabels: { color: contrastColor(STATUS_COLOR[s]) },
     }));
     charts.push(new Chart(document.getElementById('chartSeverity'), {
       type:'bar',
       data:{ labels: sevKeys, datasets: sevDatasets },
       options:{
         responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{ position:'bottom', labels:{ font:{family:'Inter', size:11} } } },
-        scales:{ x:{ stacked:true, grid:{display:false} }, y:{ stacked:true, beginAtZero:true, ticks:{precision:0} } }
+        plugins:{
+          legend:{ position:'bottom', labels:{ font:{family:'Inter', size:11.5}, padding:12, usePointStyle:true, pointStyle:'rectRounded' } },
+          tooltip:{ callbacks:{ label:(ctx)=>` ${ctx.dataset.label}: ${ctx.parsed.y} vụ` } },
+          datalabels:{ font:{family:'IBM Plex Mono', size:12, weight:'600'}, formatter:(v)=> v>0 ? v : '' }
+        },
+        scales:{
+          x:{ stacked:true, grid:{display:false}, ticks:{font:{size:12.5,weight:'600'}} },
+          y:{ stacked:true, beginAtZero:true, ticks:{precision:0}, title:{display:true,text:'Số vụ',font:{size:11.5}}, grid:{color:'#EFEAE0'} }
+        }
       }
     }));
 
@@ -780,16 +856,29 @@
       monthMap[key] = (monthMap[key]||0)+1;
     });
     const monthKeys = Object.keys(monthMap).sort();
+    const monthMax = Math.max(...monthKeys.map(k=>monthMap[k]), 1);
     charts.push(new Chart(document.getElementById('chartTrend'), {
       type:'bar',
       data:{
         labels: monthKeys.map(k => { const [y,m]=k.split('-'); return `Th${+m}/${y}`; }),
-        datasets:[{ label:'Số vụ', data: monthKeys.map(k=>monthMap[k]), backgroundColor:'#3E6E68', borderRadius:3 }]
+        datasets:[{ label:'Số vụ', data: monthKeys.map(k=>monthMap[k]), backgroundColor:'#3E6E68', borderRadius:4, maxBarThickness:64 }]
       },
       options:{
         responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{ display:false } },
-        scales:{ x:{ grid:{display:false} }, y:{ beginAtZero:true, ticks:{precision:0} } }
+        plugins:{
+          legend:{ display:false },
+          tooltip:{ callbacks:{ label:(ctx)=>` ${ctx.parsed.y} vụ` } },
+          datalabels:{
+            color:'#1B1F24', anchor:'end', align:'top',
+            font:{family:'IBM Plex Mono', size:13, weight:'600'},
+            formatter:(v)=> v
+          }
+        },
+        layout:{ padding:{ top:22 } },
+        scales:{
+          x:{ grid:{display:false}, ticks:{font:{size:12.5,weight:'600'}} },
+          y:{ beginAtZero:true, suggestedMax: monthMax*1.2, ticks:{precision:0}, title:{display:true,text:'Số vụ',font:{size:11.5}}, grid:{color:'#EFEAE0'} }
+        }
       }
     }));
 
@@ -858,6 +947,10 @@
 
     document.getElementById('insightsList').innerHTML = insights.map(i => `<li>${i}</li>`).join('');
   }
+
+  // ---------- Init: show default data unless/until the user imports a file ----------
+  loadDefaultData();
+  setTab('dashboard');
 })();
 </script>
 </body>
