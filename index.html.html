@@ -339,12 +339,24 @@
   .trongtam-table td.content-cell div{margin-bottom:2px;}
   .trongtam-table td.content-cell div:last-child{margin-bottom:0;}
 
-  .pic-bars{display:flex;flex-direction:column;gap:10px;}
-  .pic-row{display:grid;grid-template-columns:150px 1fr 60px;align-items:center;gap:10px;font-size:13px;}
+  .pic-legend{
+    display:flex;gap:18px;flex-wrap:wrap;
+    margin-bottom:16px;padding-bottom:14px;
+    border-bottom:1px solid var(--line);
+    font-size:12.5px;color:var(--slate);
+  }
+  .pic-legend .dot{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:6px;vertical-align:middle;}
+  .pic-bars{display:flex;flex-direction:column;gap:12px;}
+  .pic-row{display:grid;grid-template-columns:160px 1fr 150px 34px;align-items:center;gap:12px;font-size:13px;}
   .pic-row .name{font-weight:600;}
-  .pic-track{background:var(--paper-dim);border-radius:4px;height:16px;overflow:hidden;display:flex;}
-  .pic-seg{height:100%;}
-  .pic-row .count{font-family:'IBM Plex Mono';text-align:right;color:var(--slate);}
+  .pic-track{background:var(--paper-dim);border-radius:4px;height:20px;overflow:hidden;display:flex;}
+  .pic-seg{height:100%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono';font-size:10.5px;font-weight:600;color:#fff;}
+  .pic-breakdown{
+    display:flex;gap:10px;
+    font-family:'IBM Plex Mono';font-size:12px;white-space:nowrap;
+  }
+  .pic-breakdown b{font-weight:700;}
+  .pic-row .count{font-family:'IBM Plex Mono';text-align:right;color:var(--slate);font-weight:600;}
 
   footer{
     text-align:center;
@@ -416,7 +428,8 @@
   @media (max-width:820px){
     .kpi-grid{grid-template-columns:repeat(2,1fr);}
     .chart-grid, .chart-grid.thirds{grid-template-columns:1fr;}
-    .pic-row{grid-template-columns:110px 1fr 44px;}
+    .pic-row{grid-template-columns:1fr;gap:6px;}
+    .pic-row .count{display:none;}
     nav.tabbar{padding:0 12px;}
   }
 
@@ -538,25 +551,6 @@
         <div class="block-head"><span class="tag">05</span><h3>Nhận xét nhanh</h3></div>
         <div class="card" id="insightsCard">
           <ul id="insightsList" style="margin:0;padding-left:20px;line-height:1.9;font-size:14px;"></ul>
-        </div>
-      </section>
-
-      <section class="block">
-        <div class="block-head">
-          <span class="tag">06</span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B97D22" stroke-width="2" style="flex-shrink:0;">
-            <path d="M4 15a8 8 0 0116 0v1H4v-1z" stroke-linejoin="round"/>
-            <path d="M12 7v4M2 16h20" stroke-linecap="round"/>
-          </svg>
-          <h3>Vấn đề trọng tâm theo PIC</h3>
-        </div>
-        <div class="card">
-          <div style="overflow-x:auto;">
-            <table class="trongtam-table">
-              <thead><tr><th style="width:170px;">PIC</th><th>Nội dung cần cải thiện</th></tr></thead>
-              <tbody id="trongTamBodyDash"></tbody>
-            </table>
-          </div>
         </div>
       </section>
 
@@ -991,10 +985,8 @@ const DEFAULT_TRONGTAM = [{"pic":"Vũ Trọng Giáp","content":["TEST"]},{"pic":
       : '';
 
     const total = rows.length;
-    const totalQty = rows.reduce((s,r)=>s+(r.soLuong||1),0);
-    const withStatus = rows.filter(r => statusOf(r.trangThai) !== 'Chưa cập nhật');
     const resolved = rows.filter(r => statusOf(r.trangThai) === 'Đã khắc phục').length;
-    const resRate = withStatus.length ? Math.round(resolved / withStatus.length * 1000)/10 : 0;
+    const resRate = total ? Math.round(resolved / total * 1000)/10 : 0;
     const unresolvedCritical = rows.filter(r => statusOf(r.trangThai) === 'Chưa khắc phục' && r.mucDo === 'Khẩn cấp').length;
 
     const areaCounts = {};
@@ -1009,8 +1001,8 @@ const DEFAULT_TRONGTAM = [{"pic":"Vũ Trọng Giáp","content":["TEST"]},{"pic":
       pin: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-6.2 7-12A7 7 0 105 10c0 5.8 7 12 7 12z" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.3"/></svg>`,
     };
     const kpis = [
-      { label:'Tổng số vụ ghi nhận', value: total, sub:`${totalQty} trường hợp`, color:'#1B1F24', icon:ICONS.clipboard },
-      { label:'Tỷ lệ khắc phục', value: resRate+'%', sub:`${resolved}/${withStatus.length} vụ đã xác định`, color:'#3C8A5A', icon:ICONS.shield },
+      { label:'Tổng số vụ ghi nhận', value: total, sub: 'Toàn bộ vụ vi phạm được ghi nhận', color:'#1B1F24', icon:ICONS.clipboard },
+      { label:'Tỷ lệ khắc phục', value: resRate+'%', sub:`${resolved}/${total} vụ đã khắc phục`, color:'#3C8A5A', icon:ICONS.shield },
       { label:'Khẩn cấp chưa xử lý', value: unresolvedCritical, sub:'cần ưu tiên ngay', color:'#C4432E', icon:ICONS.warning },
       { label:'Khu vực nhiều vi phạm nhất', value: topArea ? topArea[1] : '—', sub: topArea ? topArea[0] : '', color:'#E8A33D', icon:ICONS.pin },
     ];
@@ -1166,29 +1158,49 @@ const DEFAULT_TRONGTAM = [{"pic":"Vũ Trọng Giáp","content":["TEST"]},{"pic":
     const picMap = {};
     rows.forEach(r => {
       const p = r.pic || 'Chưa gán';
-      if (!picMap[p]) picMap[p] = { total:0, resolved:0, doing:0, open:0 };
+      if (!picMap[p]) picMap[p] = { total:0, resolved:0, doing:0, open:0, none:0 };
       picMap[p].total++;
       const s = statusOf(r.trangThai);
       if (s==='Đã khắc phục') picMap[p].resolved++;
       else if (s==='Đang khắc phục') picMap[p].doing++;
       else if (s==='Chưa khắc phục') picMap[p].open++;
+      else picMap[p].none++;
     });
     const picList = Object.entries(picMap).sort((a,b)=>b[1].total-a[1].total);
     const maxTotal = Math.max(...picList.map(([,v])=>v.total), 1);
+    const C_RESOLVED = STATUS_COLOR['Đã khắc phục'], C_DOING = STATUS_COLOR['Đang khắc phục'],
+          C_OPEN = STATUS_COLOR['Chưa khắc phục'], C_NONE = STATUS_COLOR['Chưa cập nhật'];
 
-    document.getElementById('picBars').innerHTML = picList.map(([name, v]) => {
-      const w = (seg) => Math.max((v[seg]/maxTotal)*100, v[seg]>0?2:0);
+    const legendHtml = `
+      <div class="pic-legend">
+        <span><span class="dot" style="background:${C_RESOLVED}"></span>Đã khắc phục</span>
+        <span><span class="dot" style="background:${C_DOING}"></span>Đang khắc phục</span>
+        <span><span class="dot" style="background:${C_OPEN}"></span>Chưa khắc phục</span>
+        <span><span class="dot" style="background:${C_NONE}"></span>Chưa cập nhật</span>
+      </div>`;
+
+    const rowsHtmlPic = picList.map(([name, v]) => {
+      const w = (seg) => Math.max((v[seg]/maxTotal)*100, v[seg]>0?1.5:0);
       return `
       <div class="pic-row">
         <div class="name">${name}</div>
         <div class="pic-track">
-          <div class="pic-seg" style="width:${w('resolved')}%;background:${STATUS_COLOR['Đã khắc phục']}"></div>
-          <div class="pic-seg" style="width:${w('doing')}%;background:${STATUS_COLOR['Đang khắc phục']}"></div>
-          <div class="pic-seg" style="width:${w('open')}%;background:${STATUS_COLOR['Chưa khắc phục']}"></div>
+          <div class="pic-seg" style="width:${w('resolved')}%;background:${C_RESOLVED}">${v.resolved>0?v.resolved:''}</div>
+          <div class="pic-seg" style="width:${w('doing')}%;background:${C_DOING}">${v.doing>0?v.doing:''}</div>
+          <div class="pic-seg" style="width:${w('open')}%;background:${C_OPEN}">${v.open>0?v.open:''}</div>
+          <div class="pic-seg" style="width:${w('none')}%;background:${C_NONE}">${v.none>0?v.none:''}</div>
+        </div>
+        <div class="pic-breakdown">
+          <b style="color:${C_RESOLVED}">${v.resolved}</b>
+          <b style="color:${C_DOING}">${v.doing}</b>
+          <b style="color:${C_OPEN}">${v.open}</b>
+          <b style="color:${C_NONE}">${v.none}</b>
         </div>
         <div class="count">${v.total}</div>
       </div>`;
     }).join('');
+
+    document.getElementById('picBars').innerHTML = legendHtml + rowsHtmlPic;
 
     // ---- Insights (auto-generated) ----
     const groupCounts = {};
@@ -1213,7 +1225,6 @@ const DEFAULT_TRONGTAM = [{"pic":"Vũ Trọng Giáp","content":["TEST"]},{"pic":
         <td class="content-cell">${(it.content||[]).map(line => `<div>${line}</div>`).join('') || '—'}</td>
       </tr>`).join('');
     const html = rowsHtml || `<tr><td colspan="2" style="text-align:center;color:var(--slate);padding:20px;">Chưa có dữ liệu vấn đề trọng tâm</td></tr>`;
-    document.getElementById('trongTamBodyDash').innerHTML = html;
     document.getElementById('trongTamBodyTab').innerHTML = html;
   }
 
